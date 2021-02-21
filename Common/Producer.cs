@@ -22,7 +22,7 @@ namespace MessagingChannels.Example
         {
             if (_channel.Writer.TryWrite(message))
             {
-                _logger.LogDebug($"Message {message.Headers[MessageHeaders.CorrelationId]} sent at {DateTime.Now:f}");
+                _logger.LogDebug($"Message {message.Headers[MessageHeaders.CorrelationId]} sent at {DateTime.Now:hh:mm:ss.fff}");
             }
             else
             {

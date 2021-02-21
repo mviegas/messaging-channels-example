@@ -21,18 +21,16 @@ namespace MessagingChannels.Example
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            _logger.LogInformation("Consumer started");
+            
+            while (await _channel.Reader.WaitToReadAsync(stoppingToken))
             {
-                _logger.LogInformation("Consumer started");
-
-                while (await _channel.Reader.WaitToReadAsync(stoppingToken))
+                if (_channel.Reader.TryRead(out object message))
                 {
-                    if (_channel.Reader.TryRead(out object message))
+                    if (message is Message<string> typedMessage)
                     {
-                        if (message is Message<string> typedMessage)
-                        {
-                            _logger.LogDebug($"Message {typedMessage.Headers[MessageHeaders.CorrelationId]} received at {DateTime.Now:f}");
-                        }
+                        await Task.Delay(500);
+                        _logger.LogDebug($"Message {typedMessage.Headers[MessageHeaders.CorrelationId]} received at {DateTime.Now:hh:mm:ss.fff}");
                     }
                 }
             }
