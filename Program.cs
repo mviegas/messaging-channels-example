@@ -14,26 +14,22 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
     Host
     .CreateDefaultBuilder(args)
     .ConfigureWebHostDefaults(webBuilder => webBuilder
-        .ConfigureServices((_, services) => SetupProducerAndConsumer(services))
+        .ConfigureServices((_, services) =>
+        {
+            services.AddSingleton(_ => Channel.CreateUnbounded<object>());
+            services.AddSingleton<Producer>();
+            services.AddHostedService<Consumer>();
+        })
         .Configure((_, app) =>
         {
             app.UseRouting();
-            app.UseEndpoints(route => MapDefaultRoute(app, route));
+            app.UseEndpoints(route =>
+            {
+                route.MapGet("/", async context =>
+                {
+                    var producer = app.ApplicationServices.GetRequiredService<Producer>();
+                    producer.Send(new Message<string>() { Body = "OK" });
+                    await context.Response.WriteAsync("Hello world");
+                });
+            });
         }));
-
-static void MapDefaultRoute(IApplicationBuilder app, IEndpointRouteBuilder route)
-{
-    route.MapGet("/", async context =>
-    {
-        var producer = app.ApplicationServices.GetRequiredService<Producer>();
-        producer.Send(new Message<string>() { Body = "OK" });
-        await context.Response.WriteAsync("Hello world");
-    });
-}
-
-static void SetupProducerAndConsumer(IServiceCollection services)
-{
-    services.AddSingleton(_ => Channel.CreateUnbounded<object>());
-    services.AddSingleton<Producer>();
-    services.AddHostedService<Consumer>();
-}
